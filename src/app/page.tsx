@@ -45,7 +45,7 @@ export default function Home() {
           <>
             <header className="flex flex-col gap-4">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                Wedding Planner
+                Convivia
               </p>
               <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
                 Panel principal
@@ -116,7 +116,7 @@ export default function Home() {
           <>
             <header className="flex flex-col gap-4">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                Wedding Planner
+                Convivia
               </p>
               <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
                 Bienvenidos a la organización del gran día

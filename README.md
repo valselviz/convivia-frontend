@@ -1,6 +1,6 @@
-# Frontend - Wedding Management System
+# Frontend - Convivia Management System
 
-Web interface for managing guests, groups, and tables for a wedding. Built with Next.js 16 and React.
+Web interface for managing guests, groups, and tables for a convivia. Built with Next.js 16 and React.
 
 ## What does this project do?
 
