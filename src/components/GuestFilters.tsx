@@ -1,9 +1,9 @@
 "use client";
 
-import type { GuestSide, GuestType, GuestStatus } from "@/lib/guests/types";
+import type { GuestType, GuestStatus } from "@/lib/guests/types";
 
 export type GuestFiltersValue = {
-  side: GuestSide | "all";
+  host: string | "all";
   type: GuestType | "all";
   status: GuestStatus | "all";
   plusOne: "all" | "only";
@@ -13,21 +13,25 @@ export type GuestFiltersValue = {
 type GuestFiltersProps = {
   value: GuestFiltersValue;
   onChange: (next: GuestFiltersValue) => void;
+  hosts: string[];
 };
 
-export default function GuestFilters({ value, onChange }: GuestFiltersProps) {
+export default function GuestFilters({ value, onChange, hosts }: GuestFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <select
         className="h-10 rounded-lg border border-zinc-300 bg-white px-3 text-sm"
-        value={value.side}
+        value={value.host}
         onChange={(event) =>
-          onChange({ ...value, side: event.target.value as GuestFiltersValue["side"] })
+          onChange({ ...value, host: event.target.value as GuestFiltersValue["host"] })
         }
       >
-        <option value="all">Todos los lados</option>
-        <option value="BRIDE">Novia</option>
-        <option value="GROOM">Novio</option>
+        <option value="all">Todos los hosts</option>
+        {hosts.map((h) => (
+          <option key={h} value={h}>
+            {h}
+          </option>
+        ))}
       </select>
       <select
         className="h-10 rounded-lg border border-zinc-300 bg-white px-3 text-sm"
@@ -39,8 +43,6 @@ export default function GuestFilters({ value, onChange }: GuestFiltersProps) {
         <option value="all">Todos los tipos</option>
         <option value="MAIN_GUEST">Invitado principal</option>
         <option value="PLUS_ONE">Acompañante</option>
-        <option value="BRIDE">Novia</option>
-        <option value="GROOM">Novio</option>
       </select>
       <select
         className="h-10 rounded-lg border border-zinc-300 bg-white px-3 text-sm"

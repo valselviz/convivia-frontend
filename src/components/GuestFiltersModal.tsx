@@ -1,11 +1,12 @@
 "use client";
 
-import type { GuestSide, GuestType, GuestStatus } from "@/lib/guests/types";
+import type { GuestType, GuestStatus } from "@/lib/guests/types";
 import type { GuestFiltersValue } from "./GuestFilters";
 
 type GuestFiltersModalProps = {
   open: boolean;
   filters: GuestFiltersValue;
+  hosts: string[];
   onClose: () => void;
   onChange: (filters: GuestFiltersValue) => void;
   onClear: () => void;
@@ -14,6 +15,7 @@ type GuestFiltersModalProps = {
 export default function GuestFiltersModal({
   open,
   filters,
+  hosts,
   onClose,
   onChange,
   onClear,
@@ -21,7 +23,7 @@ export default function GuestFiltersModal({
   if (!open) return null;
 
   const hasActiveFilters =
-    filters.side !== "all" ||
+    filters.host !== "all" ||
     filters.type !== "all" ||
     filters.status !== "all" ||
     filters.plusOne !== "all" ||
@@ -43,20 +45,23 @@ export default function GuestFiltersModal({
 
         <div className="grid gap-6">
           <div className="grid gap-2">
-            <label className="text-sm font-medium text-zinc-700">Lado</label>
+            <label className="text-sm font-medium text-zinc-700">Host</label>
             <select
               className="h-10 rounded-lg border border-zinc-300 bg-white px-3 text-sm"
-              value={filters.side}
+              value={filters.host}
               onChange={(event) =>
                 onChange({
                   ...filters,
-                  side: event.target.value as GuestFiltersValue["side"],
+                  host: event.target.value as GuestFiltersValue["host"],
                 })
               }
             >
-              <option value="all">Todos los lados</option>
-              <option value="BRIDE">Novia</option>
-              <option value="GROOM">Novio</option>
+              <option value="all">Todos los hosts</option>
+              {hosts.map((h) => (
+                <option key={h} value={h}>
+                  {h}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -75,8 +80,6 @@ export default function GuestFiltersModal({
               <option value="all">Todos los tipos</option>
               <option value="MAIN_GUEST">Invitado principal</option>
               <option value="PLUS_ONE">Acompañante</option>
-              <option value="BRIDE">Novia</option>
-              <option value="GROOM">Novio</option>
             </select>
           </div>
 

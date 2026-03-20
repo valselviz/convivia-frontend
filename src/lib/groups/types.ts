@@ -8,7 +8,7 @@ export type GuestGroup = {
   }>;
 };
 
-export type GuestGroupWithMembers = GuestGroup & {
+export type GuestGroupWithMembers = Omit<GuestGroup, "members"> & {
   members: Array<{
     id: number;
     guest: {

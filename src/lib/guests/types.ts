@@ -1,5 +1,4 @@
-export type GuestSide = "BRIDE" | "GROOM";
-export type GuestType = "MAIN_GUEST" | "PLUS_ONE" | "BRIDE" | "GROOM";
+export type GuestType = "MAIN_GUEST" | "PLUS_ONE";
 export type GuestStatus = "INVITED" | "CONFIRMED" | "DECLINED";
 export type AgeRange = "ADULT" | "CHILD" | "BABY";
 export type Gender = "FEMALE" | "MALE";
@@ -9,7 +8,7 @@ export interface Guest {
   full_name: string;
   guest_type: GuestType;
   main_guest_id: number | null;
-  side: GuestSide | null;
+  host_name: string | null;
   age_range: AgeRange;
   notes: string | null;
   status: GuestStatus;

@@ -71,7 +71,7 @@ export default function GroupModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="h-11 rounded-lg border border-zinc-300 px-3 text-sm"
-              placeholder="Ej. Familia de la novia"
+              placeholder="Ej. Familia del host"
             />
           </label>
           <label className="grid gap-2 text-sm font-medium text-zinc-700">

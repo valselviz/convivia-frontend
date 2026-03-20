@@ -3,7 +3,6 @@ import type {
   GuestCreateInput,
   GuestUpdateInput,
   GuestStatus,
-  GuestSide,
   GuestType,
 } from "./types";
 
@@ -37,7 +36,7 @@ const request = async <T>(
 
 export type GuestListParams = {
   search?: string;
-  side?: GuestSide;
+  hostName?: string;
   type?: GuestType;
   status?: GuestStatus;
   plusOne?: "all" | "only";
@@ -50,13 +49,13 @@ const buildQueryString = (params: GuestListParams): string => {
   if (params.search) {
     searchParams.append("search", params.search);
   }
-  if (params.side && params.side !== "all") {
-    searchParams.append("side", params.side);
+  if (params.hostName) {
+    searchParams.append("hostName", params.hostName);
   }
-  if (params.type && params.type !== "all") {
+  if (params.type) {
     searchParams.append("type", params.type);
   }
-  if (params.status && params.status !== "all") {
+  if (params.status) {
     searchParams.append("status", params.status);
   }
   if (params.plusOne && params.plusOne !== "all") {

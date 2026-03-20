@@ -7,7 +7,6 @@ import type {
   GuestCreateInput,
   AgeRange,
   Gender,
-  GuestSide,
   GuestStatus,
   GuestType,
 } from "@/lib/guests/types";
@@ -17,6 +16,7 @@ type GuestModalProps = {
   mode: "create" | "edit";
   initialGuest: Guest | null;
   mainGuests: Guest[];
+  hosts: string[];
   onClose: () => void;
   onSubmit: (input: GuestCreateInput) => void;
 };
@@ -25,7 +25,7 @@ const defaultForm: GuestCreateInput = {
   full_name: "",
   guest_type: "MAIN_GUEST",
   main_guest_id: null,
-  side: "BRIDE",
+  host_name: null,
   gender: "FEMALE",
   age_range: "ADULT",
   avatar_key: null,
@@ -38,6 +38,7 @@ export default function GuestModal({
   mode,
   initialGuest,
   mainGuests,
+  hosts,
   onClose,
   onSubmit,
 }: GuestModalProps) {
@@ -49,7 +50,7 @@ export default function GuestModal({
         full_name,
         guest_type,
         main_guest_id,
-        side,
+        host_name,
         gender,
         age_range,
         avatar_key,
@@ -60,7 +61,7 @@ export default function GuestModal({
         full_name,
         guest_type,
         main_guest_id,
-        side,
+        host_name,
         gender,
         age_range,
         avatar_key,
@@ -69,8 +70,11 @@ export default function GuestModal({
       });
       return;
     }
-    setForm(defaultForm);
-  }, [initialGuest, open]);
+    setForm({
+      ...defaultForm,
+      host_name: hosts[0] ?? null,
+    });
+  }, [initialGuest, open, hosts]);
 
   if (!open) {
     return null;
@@ -135,19 +139,24 @@ export default function GuestModal({
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-2 text-sm font-medium text-zinc-700">
-              Lado
+              Host
               <select
-                value={form.side ?? "BRIDE"}
+                value={form.host_name ?? ""}
+                disabled={form.guest_type === "PLUS_ONE"}
                 onChange={(event) =>
                   setForm((prev) => ({
                     ...prev,
-                    side: event.target.value as GuestSide,
+                    host_name: event.target.value || null,
                   }))
                 }
                 className="h-11 rounded-lg border border-zinc-300 px-3 text-sm"
               >
-                <option value="BRIDE">Novia</option>
-                <option value="GROOM">Novio</option>
+                <option value="">Seleccionar</option>
+                {hosts.map((h) => (
+                  <option key={h} value={h}>
+                    {h}
+                  </option>
+                ))}
               </select>
             </label>
             <label className="grid gap-2 text-sm font-medium text-zinc-700">
@@ -162,14 +171,22 @@ export default function GuestModal({
                       event.target.value === "PLUS_ONE"
                         ? prev.main_guest_id
                         : null,
+                    ...(event.target.value === "PLUS_ONE"
+                      ? {
+                          host_name:
+                            prev.main_guest_id !== null
+                              ? mainGuests.find(
+                                  (g) => g.id === prev.main_guest_id,
+                                )?.host_name ?? null
+                              : prev.host_name,
+                        }
+                      : {}),
                   }))
                 }
                 className="h-11 rounded-lg border border-zinc-300 px-3 text-sm"
               >
                 <option value="MAIN_GUEST">Invitado principal</option>
                 <option value="PLUS_ONE">Acompañante</option>
-                <option value="BRIDE">Novia</option>
-                <option value="GROOM">Novio</option>
               </select>
             </label>
             <label className="grid gap-2 text-sm font-medium text-zinc-700">
@@ -195,12 +212,21 @@ export default function GuestModal({
                   required
                   value={form.main_guest_id ?? ""}
                   onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      main_guest_id: event.target.value
+                    setForm((prev) => {
+                      const nextMainGuestId = event.target.value
                         ? Number(event.target.value)
-                        : null,
-                    }))
+                        : null;
+                      const nextHostName =
+                        nextMainGuestId !== null
+                          ? mainGuests.find((g) => g.id === nextMainGuestId)
+                              ?.host_name ?? null
+                          : prev.host_name;
+                      return {
+                        ...prev,
+                        main_guest_id: nextMainGuestId,
+                        host_name: nextHostName,
+                      };
+                    })
                   }
                   className="h-11 rounded-lg border border-zinc-300 px-3 text-sm"
                 >

@@ -23,18 +23,12 @@ export default function GuestTable({
   onAddPlusOne,
 }: GuestTableProps) {
   const allSelected = guests.length > 0 && selectedIds.length === guests.length;
-  const sideLabel = (side: Guest["side"]) =>
-    side === "BRIDE" ? "Novia" : "Novio";
   const typeLabel = (type: Guest["guest_type"]) => {
     switch (type) {
       case "MAIN_GUEST":
         return "Invitado principal";
       case "PLUS_ONE":
         return "Acompañante";
-      case "BRIDE":
-        return "Novia";
-      case "GROOM":
-        return "Novio";
       default:
         return type;
     }
@@ -78,7 +72,7 @@ export default function GuestTable({
               />
             </th>
             <th className="px-4 py-3">Nombre</th>
-            <th className="px-4 py-3">Lado</th>
+            <th className="px-4 py-3">Host</th>
             <th className="px-4 py-3">Tipo</th>
             <th className="px-4 py-3">Rango de edad</th>
             <th className="px-4 py-3">Estado</th>
@@ -116,7 +110,7 @@ export default function GuestTable({
                 </div>
               </td>
               <td className="px-4 py-3">
-                {guest.side ? sideLabel(guest.side) : "—"}
+                {guest.host_name ?? "—"}
               </td>
               <td className="px-4 py-3">{typeLabel(guest.guest_type)}</td>
               <td className="px-4 py-3">{ageLabel(guest.age_range)}</td>
