@@ -6,6 +6,7 @@ import { CATEGORY_LABELS } from "@/lib/groups/types";
 import { groupService } from "@/lib/groups/service";
 
 type AddToGroupModalProps = {
+  eventId: number;
   open: boolean;
   guestIds: number[];
   onClose: () => void;
@@ -13,6 +14,7 @@ type AddToGroupModalProps = {
 };
 
 export default function AddToGroupModal({
+  eventId,
   open,
   guestIds,
   onClose,
@@ -27,11 +29,11 @@ export default function AddToGroupModal({
       loadGroups();
       setSelectedGroupId(null);
     }
-  }, [open]);
+  }, [open, eventId]);
 
   const loadGroups = async () => {
     try {
-      const data = await groupService.list();
+      const data = await groupService.list(eventId);
       setGroups(data);
     } catch (error) {
       console.error("Error loading groups:", error);
@@ -43,7 +45,7 @@ export default function AddToGroupModal({
 
     setIsLoading(true);
     try {
-      await groupService.addMembers(selectedGroupId, guestIds);
+      await groupService.addMembers(eventId, selectedGroupId, guestIds);
       onSuccess();
       onClose();
     } catch (error) {

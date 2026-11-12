@@ -12,6 +12,7 @@ import AddToGroupModal from "@/components/AddToGroupModal";
 import type { GuestFiltersValue } from "@/components/GuestFilters";
 import { hostsService } from "@/lib/hosts/service";
 import { guestService } from "@/lib/guests/service";
+import { setLastEventId } from "@/lib/events/storage";
 import type { Guest, GuestCreateInput, GuestStatus } from "@/lib/guests/types";
 
 const defaultFilters: GuestFiltersValue = {
@@ -22,7 +23,11 @@ const defaultFilters: GuestFiltersValue = {
   order: "name",
 };
 
-export default function GuestsClient() {
+export type GuestsClientProps = {
+  eventId: number;
+};
+
+export default function GuestsClient({ eventId }: GuestsClientProps) {
   const searchParams = useSearchParams();
   const [guests, setGuests] = useState<Guest[]>([]);
   const [filters, setFilters] = useState<GuestFiltersValue>(defaultFilters);
@@ -37,6 +42,10 @@ export default function GuestsClient() {
   const [isAddToGroupModalOpen, setIsAddToGroupModalOpen] = useState(false);
 
   useEffect(() => {
+    setLastEventId(eventId);
+  }, [eventId]);
+
+  useEffect(() => {
     const loadGuests = async () => {
       const params = {
         search: searchQuery || undefined,
@@ -46,17 +55,17 @@ export default function GuestsClient() {
         plusOne: filters.plusOne,
         order: filters.order,
       };
-      const data = await guestService.list(params);
+      const data = await guestService.list(eventId, params);
       setGuests(data);
     };
     loadGuests();
-  }, [filters, searchQuery]);
+  }, [eventId, filters, searchQuery]);
 
   useEffect(() => {
     const shouldSetup = searchParams.get("setup") === "hosts";
 
     hostsService
-      .get()
+      .get(eventId)
       .then((storedHosts) => {
         setHosts(storedHosts);
         const empty = storedHosts.length === 0;
@@ -67,7 +76,7 @@ export default function GuestsClient() {
         setIsHostsModalOpen(true);
       })
       .finally(() => setIsHostsLoading(false));
-  }, [searchParams]);
+  }, [eventId, searchParams]);
 
   // Guests already come filtered and sorted from backend
   const filteredGuests = guests;
@@ -130,7 +139,7 @@ export default function GuestsClient() {
       `Borrar ${selectedIds.length} invitado(s)? Esta accion no se puede deshacer.`,
     );
     if (!confirmDelete) return;
-    await guestService.delete(selectedIds);
+    await guestService.delete(eventId, selectedIds);
     // Recargar la lista desde el backend
     const params = {
       search: searchQuery || undefined,
@@ -140,14 +149,14 @@ export default function GuestsClient() {
       plusOne: filters.plusOne,
       order: filters.order,
     };
-    const data = await guestService.list(params);
+    const data = await guestService.list(eventId, params);
     setGuests(data);
     setSelectedIds([]);
   };
 
   const handleStatusChange = async (status: GuestStatus) => {
     if (selectedIds.length === 0) return;
-    await guestService.updateStatus(selectedIds, status);
+    await guestService.updateStatus(eventId, selectedIds, status);
     // Recargar la lista desde el backend
     const params = {
       search: searchQuery || undefined,
@@ -157,19 +166,19 @@ export default function GuestsClient() {
       plusOne: filters.plusOne,
       order: filters.order,
     };
-    const data = await guestService.list(params);
+    const data = await guestService.list(eventId, params);
     setGuests(data);
   };
 
   const handleSubmit = async (input: GuestCreateInput) => {
     // id 0 = new guest (e.g. +1 from button); only update if it has a real id
     if (editingGuest && editingGuest.id !== 0) {
-      await guestService.update({
+      await guestService.update(eventId, {
         id: editingGuest.id,
         ...input,
       });
     } else {
-      await guestService.create(input);
+      await guestService.create(eventId, input);
     }
     // Recargar la lista desde el backend
     const params = {
@@ -180,7 +189,7 @@ export default function GuestsClient() {
       plusOne: filters.plusOne,
       order: filters.order,
     };
-    const data = await guestService.list(params);
+    const data = await guestService.list(eventId, params);
     setGuests(data);
     setModalOpen(false);
     setSelectedIds([]);
@@ -189,7 +198,7 @@ export default function GuestsClient() {
   const handleHostsSave = (nextHosts: string[]) => {
     setIsHostsLoading(true);
     hostsService
-      .upsert(nextHosts)
+      .upsert(eventId, nextHosts)
       .then((savedHosts) => {
         setHosts(savedHosts);
         setIsHostsModalOpen(false);
@@ -322,6 +331,7 @@ export default function GuestsClient() {
       />
 
       <AddToGroupModal
+        eventId={eventId}
         open={isAddToGroupModalOpen}
         guestIds={selectedIds}
         onClose={() => setIsAddToGroupModalOpen(false)}

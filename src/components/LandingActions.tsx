@@ -4,17 +4,31 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { hostsService } from "@/lib/hosts/service";
 
-export default function LandingActions() {
+type LandingActionsProps = {
+  eventId: number | null;
+};
+
+export default function LandingActions({ eventId }: LandingActionsProps) {
   const [hosts, setHosts] = useState<string[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (eventId == null) {
+      setHosts(null);
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
     hostsService
-      .get()
+      .get(eventId)
       .then(setHosts)
       .catch(() => setHosts(null))
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [eventId]);
+
+  if (eventId == null) {
+    return null;
+  }
 
   if (isLoading) {
     return (
@@ -31,7 +45,7 @@ export default function LandingActions() {
           {hosts.join(" & ")}
         </div>
         <Link
-          href="/guests"
+          href={`/events/${eventId}/guests`}
           className="inline-flex h-12 items-center justify-center rounded-full bg-zinc-900 px-6 text-sm font-semibold text-white transition hover:bg-zinc-800"
         >
           Ir a invitados
@@ -43,13 +57,13 @@ export default function LandingActions() {
   return (
     <div className="flex flex-col gap-3 sm:flex-row">
       <Link
-        href="/guests?setup=hosts"
+        href={`/events/${eventId}/guests?setup=hosts`}
         className="inline-flex h-12 items-center justify-center rounded-full bg-zinc-900 px-6 text-sm font-semibold text-white transition hover:bg-zinc-800"
       >
         Configurar hosts
       </Link>
       <Link
-        href="/guests"
+        href={`/events/${eventId}/guests`}
         className="inline-flex h-12 items-center justify-center rounded-full border border-zinc-300 px-6 text-sm font-semibold text-zinc-900 transition hover:border-zinc-400"
       >
         Ir a invitados

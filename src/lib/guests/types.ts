@@ -5,6 +5,7 @@ export type Gender = "FEMALE" | "MALE";
 
 export interface Guest {
   id: number;
+  event_id?: number;
   full_name: string;
   guest_type: GuestType;
   main_guest_id: number | null;

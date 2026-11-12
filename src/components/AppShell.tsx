@@ -1,15 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { eventsService, type EventDTO } from "@/lib/events/service";
+import { setLastEventId } from "@/lib/events/storage";
 
-const NAV_ITEMS: Array<{ href: string; label: string }> = [
-  { href: "/", label: "Panel principal" },
-  { href: "/guests", label: "Invitados" },
-  { href: "/groups", label: "Grupos" },
-  { href: "/tables", label: "Mesas (próximamente)" },
-];
+type NavItem = { href: string; label: string; disabled?: boolean };
 
 export default function AppShell({
   children,
@@ -17,11 +14,61 @@ export default function AppShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [events, setEvents] = useState<EventDTO[]>([]);
 
-  const isActive = (href: string) => {
+  const eventMatch = pathname.match(/^\/events\/(\d+)/);
+  const currentEventId = eventMatch ? Number(eventMatch[1]) : null;
+
+  const section = useMemo(() => {
+    if (pathname.includes("/groups")) return "groups";
+    if (pathname.includes("/guests")) return "guests";
+    return "guests";
+  }, [pathname]);
+
+  useEffect(() => {
+    eventsService.list().then(setEvents).catch(() => setEvents([]));
+  }, [pathname]);
+
+  const eventBase =
+    currentEventId != null && Number.isFinite(currentEventId)
+      ? `/events/${currentEventId}`
+      : null;
+
+  const navItems: NavItem[] = useMemo(() => {
+    if (!eventBase) {
+      return [
+        { href: "/", label: "Panel principal" },
+        { href: "/guests", label: "Invitados" },
+        { href: "/groups", label: "Grupos" },
+        { href: "/tables", label: "Mesas (próximamente)", disabled: true },
+      ];
+    }
+    return [
+      { href: "/", label: "Panel principal" },
+      { href: `${eventBase}/guests`, label: "Invitados" },
+      { href: `${eventBase}/groups`, label: "Grupos" },
+      { href: "/tables", label: "Mesas (próximamente)", disabled: true },
+    ];
+  }, [eventBase]);
+
+  const isActive = (href: string, disabled?: boolean) => {
+    if (disabled) return false;
     if (href === "/") return pathname === "/";
     return pathname === href;
+  };
+
+  const onEventChange = (idStr: string) => {
+    const id = Number(idStr);
+    if (!Number.isFinite(id)) return;
+    setLastEventId(id);
+    const path =
+      section === "groups"
+        ? `/events/${id}/groups`
+        : `/events/${id}/guests`;
+    router.push(path);
+    setMobileOpen(false);
   };
 
   return (
@@ -29,18 +76,41 @@ export default function AppShell({
       <div className="flex">
         <aside className="hidden w-64 flex-col border-r bg-white md:flex">
           <div className="p-4 font-semibold text-zinc-900">Convivia</div>
+          {events.length > 0 && (
+            <div className="px-3 pb-3">
+              <label className="grid gap-1 text-xs font-medium text-zinc-600">
+                Evento
+                <select
+                  value={
+                    currentEventId != null &&
+                    events.some((e) => e.id === currentEventId)
+                      ? String(currentEventId)
+                      : ""
+                  }
+                  onChange={(e) => onEventChange(e.target.value)}
+                  className="rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm text-zinc-900"
+                >
+                  {events.map((ev) => (
+                    <option key={ev.id} value={ev.id}>
+                      {ev.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
           <nav className="flex-1 space-y-1 px-2 pb-4">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileOpen(false)}
+                key={item.href + item.label}
+                href={item.disabled ? "#" : item.href}
+                onClick={() => !item.disabled && setMobileOpen(false)}
                 className={[
                   "block rounded-lg px-3 py-2 text-sm font-semibold transition",
-                  isActive(item.href)
+                  isActive(item.href, item.disabled)
                     ? "bg-zinc-900 text-white"
                     : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900",
-                  item.href === "/tables" ? "opacity-60 pointer-events-none" : "",
+                  item.disabled ? "opacity-60 pointer-events-none" : "",
                 ].join(" ")}
               >
                 {item.label}
@@ -85,18 +155,41 @@ export default function AppShell({
                 Cerrar
               </button>
             </div>
+            {events.length > 0 && (
+              <div className="px-2 pb-2">
+                <label className="grid gap-1 text-xs font-medium text-zinc-600">
+                  Evento
+                  <select
+                    value={
+                      currentEventId != null &&
+                      events.some((e) => e.id === currentEventId)
+                        ? String(currentEventId)
+                        : ""
+                    }
+                    onChange={(e) => onEventChange(e.target.value)}
+                    className="w-full rounded-lg border border-zinc-300 bg-white px-2 py-2 text-sm"
+                  >
+                    {events.map((ev) => (
+                      <option key={ev.id} value={ev.id}>
+                        {ev.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
             <nav className="space-y-1 px-1 pb-4 pt-2">
-              {NAV_ITEMS.map((item) => (
+              {navItems.map((item) => (
                 <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
+                  key={item.href + item.label}
+                  href={item.disabled ? "#" : item.href}
+                  onClick={() => !item.disabled && setMobileOpen(false)}
                   className={[
                     "block rounded-lg px-3 py-2 text-sm font-semibold transition",
-                    isActive(item.href)
+                    isActive(item.href, item.disabled)
                       ? "bg-zinc-900 text-white"
                       : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900",
-                    item.href === "/tables" ? "opacity-60 pointer-events-none" : "",
+                    item.disabled ? "opacity-60 pointer-events-none" : "",
                   ].join(" ")}
                 >
                   {item.label}
@@ -109,4 +202,3 @@ export default function AppShell({
     </div>
   );
 }
-

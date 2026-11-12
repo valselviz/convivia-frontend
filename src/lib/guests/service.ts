@@ -5,34 +5,7 @@ import type {
   GuestStatus,
   GuestType,
 } from "./types";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ??
-  "http://localhost:3000";
-
-const request = async <T>(
-  path: string,
-  options: RequestInit = {},
-): Promise<T> => {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers ?? {}),
-    },
-    ...options,
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `Request failed: ${response.status}`);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return (await response.json()) as T;
-};
+import { apiRequest } from "../api/client";
 
 export type GuestListParams = {
   search?: string;
@@ -45,7 +18,7 @@ export type GuestListParams = {
 
 const buildQueryString = (params: GuestListParams): string => {
   const searchParams = new URLSearchParams();
-  
+
   if (params.search) {
     searchParams.append("search", params.search);
   }
@@ -64,33 +37,39 @@ const buildQueryString = (params: GuestListParams): string => {
   if (params.order) {
     searchParams.append("order", params.order);
   }
-  
+
   const query = searchParams.toString();
   return query ? `?${query}` : "";
 };
 
+const base = (eventId: number) => `/events/${eventId}`;
+
 export const guestService = {
-  async list(params?: GuestListParams): Promise<Guest[]> {
+  async list(eventId: number, params?: GuestListParams): Promise<Guest[]> {
     const query = params ? buildQueryString(params) : "";
-    return request<Guest[]>(`/guests${query}`);
+    return apiRequest<Guest[]>(`${base(eventId)}/guests${query}`);
   },
-  async create(input: GuestCreateInput): Promise<Guest> {
-    return request<Guest>("/guests", {
+  async create(eventId: number, input: GuestCreateInput): Promise<Guest> {
+    return apiRequest<Guest>(`${base(eventId)}/guests`, {
       method: "POST",
       body: JSON.stringify(input),
     });
   },
-  async update(input: GuestUpdateInput): Promise<Guest | null> {
+  async update(eventId: number, input: GuestUpdateInput): Promise<Guest | null> {
     const { id, ...payload } = input;
-    return request<Guest>(`/guests/${id}`, {
+    return apiRequest<Guest>(`${base(eventId)}/guests/${id}`, {
       method: "PATCH",
       body: JSON.stringify(payload),
     });
   },
-  async updateStatus(ids: number[], status: GuestStatus): Promise<Guest[]> {
+  async updateStatus(
+    eventId: number,
+    ids: number[],
+    status: GuestStatus,
+  ): Promise<Guest[]> {
     const updated = await Promise.all(
       ids.map((id) =>
-        request<Guest>(`/guests/${id}`, {
+        apiRequest<Guest>(`${base(eventId)}/guests/${id}`, {
           method: "PATCH",
           body: JSON.stringify({ status }),
         }),
@@ -98,10 +77,10 @@ export const guestService = {
     );
     return updated;
   },
-  async delete(ids: number[]): Promise<void> {
+  async delete(eventId: number, ids: number[]): Promise<void> {
     await Promise.all(
       ids.map((id) =>
-        request<void>(`/guests/${id}`, {
+        apiRequest<void>(`${base(eventId)}/guests/${id}`, {
           method: "DELETE",
         }),
       ),

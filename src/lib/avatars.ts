@@ -1,6 +1,4 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ??
-  "http://localhost:3000";
+import { API_BASE_URL } from "./api/client";
 
 export const avatarKeys = [
   "female-1",
