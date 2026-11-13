@@ -14,6 +14,10 @@ import type { AssignmentDTO } from "@/lib/assignments/types";
 import { getAvatarUrl } from "@/lib/avatars";
 import TableModal, { type TableFormInput } from "@/components/TableModal";
 import SeatPickerModal from "@/components/SeatPickerModal";
+import SeatingPanel from "@/components/SeatingPanel";
+import { seatingService } from "@/lib/seating/service";
+import type { SeatingAlert, SeatingWeights } from "@/lib/seating/types";
+import { DEFAULT_WEIGHTS } from "@/lib/seating/presets";
 
 const VenueCanvas = dynamic(() => import("@/components/VenueCanvas"), {
   ssr: false,
@@ -37,6 +41,9 @@ export default function TablesClient({ eventId }: TablesClientProps) {
   const [roomWidthInput, setRoomWidthInput] = useState("15");
   const [roomHeightInput, setRoomHeightInput] = useState("10");
   const [picker, setPicker] = useState<PickerState | null>(null);
+  const [seatingWeights, setSeatingWeights] = useState<SeatingWeights>(DEFAULT_WEIGHTS);
+  const [seatingAlerts, setSeatingAlerts] = useState<SeatingAlert[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     setLastEventId(eventId);
@@ -223,6 +230,24 @@ export default function TablesClient({ eventId }: TablesClientProps) {
     }
   };
 
+  const handleGenerateAssignment = async () => {
+    setIsGenerating(true);
+    try {
+      const result = await seatingService.autoAssign(eventId, seatingWeights);
+      setSeatingAlerts(result.alerts);
+      await loadData();
+    } catch (error) {
+      console.error("Error generating assignment:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Error al generar la asignación automática",
+      );
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   if (isLoading || !event) {
     return (
       <div className="min-h-screen bg-zinc-50 px-6 py-10 text-zinc-900">
@@ -316,6 +341,14 @@ export default function TablesClient({ eventId }: TablesClientProps) {
             </div>
           </div>
         </div>
+
+        <SeatingPanel
+          weights={seatingWeights}
+          onWeightsChange={setSeatingWeights}
+          onGenerate={handleGenerateAssignment}
+          isGenerating={isGenerating}
+          alerts={seatingAlerts}
+        />
 
         <div className="grid gap-6 lg:grid-cols-[1fr_260px]">
           <VenueCanvas
