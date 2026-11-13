@@ -8,6 +8,7 @@ export type TableFormInput = {
   name: string;
   shape: TableShape;
   seats: number;
+  min_seats: number | null;
   width: number;
   height: number;
 };
@@ -30,6 +31,7 @@ export default function TableModal({
   const [name, setName] = useState("");
   const [shape, setShape] = useState<TableShape>("redonda");
   const [seats, setSeats] = useState(8);
+  const [minSeatsInput, setMinSeatsInput] = useState("");
   const [width, setWidth] = useState(DEFAULT_SIZE_BY_SHAPE.redonda.width);
   const [height, setHeight] = useState(DEFAULT_SIZE_BY_SHAPE.redonda.height);
 
@@ -39,12 +41,16 @@ export default function TableModal({
       setName(initialTable.name);
       setShape(initialTable.shape);
       setSeats(initialTable.seats);
+      setMinSeatsInput(
+        initialTable.min_seats != null ? String(initialTable.min_seats) : "",
+      );
       setWidth(initialTable.width);
       setHeight(initialTable.height);
     } else {
       setName("");
       setShape("redonda");
       setSeats(8);
+      setMinSeatsInput("");
       setWidth(DEFAULT_SIZE_BY_SHAPE.redonda.width);
       setHeight(DEFAULT_SIZE_BY_SHAPE.redonda.height);
     }
@@ -58,12 +64,17 @@ export default function TableModal({
     setHeight(DEFAULT_SIZE_BY_SHAPE[next].height);
   };
 
+  const minSeats = minSeatsInput.trim() === "" ? null : Number(minSeatsInput);
+  const minSeatsError = minSeats != null && minSeats > seats;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (minSeatsError) return;
     onSubmit({
       name: name.trim(),
       shape,
       seats,
+      min_seats: minSeats,
       width,
       height: shape === "redonda" ? width : height,
     });
@@ -111,7 +122,7 @@ export default function TableModal({
               </select>
             </label>
             <label className="grid gap-2 text-sm font-medium text-zinc-700">
-              Puestos
+              Puestos (máximo)
               <input
                 required
                 type="number"
@@ -120,6 +131,24 @@ export default function TableModal({
                 onChange={(e) => setSeats(Number(e.target.value))}
                 className="h-11 rounded-lg border border-zinc-300 px-3 text-sm"
               />
+            </label>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-2 text-sm font-medium text-zinc-700">
+              Capacidad mínima (opcional)
+              <input
+                type="number"
+                min={1}
+                value={minSeatsInput}
+                onChange={(e) => setMinSeatsInput(e.target.value)}
+                placeholder="Sin mínimo"
+                className="h-11 rounded-lg border border-zinc-300 px-3 text-sm"
+              />
+              {minSeatsError && (
+                <span className="text-xs font-normal text-red-600">
+                  No puede superar el máximo de puestos ({seats}).
+                </span>
+              )}
             </label>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -160,7 +189,8 @@ export default function TableModal({
             </button>
             <button
               type="submit"
-              className="h-11 rounded-full bg-zinc-900 px-6 text-sm font-semibold text-white transition hover:bg-zinc-800"
+              disabled={minSeatsError}
+              className="h-11 rounded-full bg-zinc-900 px-6 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50"
             >
               Guardar
             </button>

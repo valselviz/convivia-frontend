@@ -7,6 +7,7 @@ import { eventsService, type EventDTO } from "@/lib/events/service";
 import { tablesService } from "@/lib/tables/service";
 import type { TableDTO } from "@/lib/tables/types";
 import { SHAPE_LABELS } from "@/lib/tables/types";
+import { guestService } from "@/lib/guests/service";
 import TableModal, { type TableFormInput } from "@/components/TableModal";
 
 const VenueCanvas = dynamic(() => import("@/components/VenueCanvas"), {
@@ -26,6 +27,7 @@ export default function TablesClient({ eventId }: TablesClientProps) {
   const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
   const [roomWidthInput, setRoomWidthInput] = useState("15");
   const [roomHeightInput, setRoomHeightInput] = useState("10");
+  const [confirmedGuestCount, setConfirmedGuestCount] = useState(0);
 
   useEffect(() => {
     setLastEventId(eventId);
@@ -38,14 +40,16 @@ export default function TablesClient({ eventId }: TablesClientProps) {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [tablesData, eventData] = await Promise.all([
+      const [tablesData, eventData, confirmedGuests] = await Promise.all([
         tablesService.list(eventId),
         eventsService.getById(eventId),
+        guestService.list(eventId, { status: "CONFIRMED" }),
       ]);
       setTables(tablesData);
       setEvent(eventData);
       setRoomWidthInput(String(eventData.room_width_m));
       setRoomHeightInput(String(eventData.room_height_m));
+      setConfirmedGuestCount(confirmedGuests.length);
     } catch (error) {
       console.error("Error loading tables:", error);
     } finally {
@@ -174,6 +178,8 @@ export default function TablesClient({ eventId }: TablesClientProps) {
 
   const unplacedTables = tables.filter((t) => t.pos_x === null);
   const placedTables = tables.filter((t) => t.pos_x !== null);
+  const totalCapacity = tables.reduce((sum, t) => sum + t.seats, 0);
+  const capacityShortfall = confirmedGuestCount - totalCapacity;
 
   return (
     <div className="min-h-screen bg-zinc-50 px-6 py-10 text-zinc-900">
@@ -186,11 +192,20 @@ export default function TablesClient({ eventId }: TablesClientProps) {
           </p>
         </header>
 
+        {capacityShortfall > 0 && (
+          <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+            La capacidad total de las mesas ({totalCapacity} puestos) es menor
+            que la cantidad de invitados confirmados ({confirmedGuestCount}) —
+            faltan {capacityShortfall} puestos.
+          </div>
+        )}
+
         <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="text-xs text-zinc-500">
               {tables.length} mesa(s) creada(s) · {placedTables.length}{" "}
-              ubicada(s)
+              ubicada(s) · {totalCapacity} puestos totales ·{" "}
+              {confirmedGuestCount} confirmados
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <label className="flex items-center gap-2 text-xs font-medium text-zinc-600">
@@ -294,7 +309,11 @@ export default function TablesClient({ eventId }: TablesClientProps) {
                     {table.name}
                   </td>
                   <td className="px-4 py-3">{SHAPE_LABELS[table.shape]}</td>
-                  <td className="px-4 py-3">{table.seats}</td>
+                  <td className="px-4 py-3">
+                    {table.min_seats != null
+                      ? `${table.min_seats}–${table.seats}`
+                      : table.seats}
+                  </td>
                   <td className="px-4 py-3 text-zinc-600">
                     {table.width}m × {table.height}m
                   </td>

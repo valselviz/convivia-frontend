@@ -6,6 +6,7 @@ export type TableDTO = {
   name: string;
   shape: TableShape;
   seats: number;
+  min_seats: number | null;
   category: string | null;
   pos_x: number | null;
   pos_y: number | null;
@@ -17,6 +18,7 @@ export type TableCreateInput = {
   name: string;
   shape: TableShape;
   seats: number;
+  min_seats?: number | null;
   category?: string | null;
   pos_x?: number | null;
   pos_y?: number | null;
