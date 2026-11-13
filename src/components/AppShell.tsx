@@ -24,6 +24,7 @@ export default function AppShell({
   const section = useMemo(() => {
     if (pathname.includes("/groups")) return "groups";
     if (pathname.includes("/relations")) return "relations";
+    if (pathname.includes("/tables")) return "tables";
     if (pathname.includes("/guests")) return "guests";
     return "guests";
   }, [pathname]);
@@ -43,7 +44,6 @@ export default function AppShell({
         { href: "/", label: "Panel principal" },
         { href: "/guests", label: "Invitados" },
         { href: "/groups", label: "Grupos" },
-        { href: "/tables", label: "Mesas (próximamente)", disabled: true },
       ];
     }
     return [
@@ -51,7 +51,7 @@ export default function AppShell({
       { href: `${eventBase}/guests`, label: "Invitados" },
       { href: `${eventBase}/groups`, label: "Grupos" },
       { href: `${eventBase}/relations`, label: "Relaciones" },
-      { href: "/tables", label: "Mesas (próximamente)", disabled: true },
+      { href: `${eventBase}/tables`, label: "Mesas" },
     ];
   }, [eventBase]);
 
@@ -70,7 +70,9 @@ export default function AppShell({
         ? `/events/${id}/groups`
         : section === "relations"
           ? `/events/${id}/relations`
-          : `/events/${id}/guests`;
+          : section === "tables"
+            ? `/events/${id}/tables`
+            : `/events/${id}/guests`;
     router.push(path);
     setMobileOpen(false);
   };

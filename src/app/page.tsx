@@ -119,7 +119,7 @@ export default function Home() {
                 <ul className="mt-4 space-y-3 text-sm text-zinc-600">
                   <li>Gestionar varios eventos desde un mismo espacio.</li>
                   <li>Filtrar invitados por host, tipo y estado.</li>
-                  <li>Agrupar invitados y preparar mesas (próximamente).</li>
+                  <li>Agrupar invitados y ubicar las mesas en el espacio.</li>
                 </ul>
               </div>
             </section>
@@ -197,13 +197,14 @@ export default function Home() {
                       Grupos
                     </Link>
                   )}
-                  <button
-                    type="button"
-                    className="inline-flex h-11 items-center justify-center rounded-full border border-zinc-300 px-6 text-sm font-semibold text-zinc-700"
-                    disabled
-                  >
-                    Mesas (próximamente)
-                  </button>
+                  {activeEventId != null && (
+                    <Link
+                      href={`/events/${activeEventId}/tables`}
+                      className="inline-flex h-11 items-center justify-center rounded-full border border-zinc-300 px-6 text-sm font-semibold text-zinc-700 transition hover:border-zinc-400"
+                    >
+                      Mesas
+                    </Link>
+                  )}
                 </div>
               </div>
               <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">

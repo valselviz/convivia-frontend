@@ -3,6 +3,8 @@ import { apiRequest } from "../api/client";
 export type EventDTO = {
   id: number;
   name: string;
+  room_width_m: number;
+  room_height_m: number;
   created_at: string;
   updated_at: string;
 };
@@ -27,6 +29,20 @@ export const eventsService = {
     return apiRequest<EventDTO>(`/events/${id}`, {
       method: "PATCH",
       body: JSON.stringify({ name }),
+    });
+  },
+
+  async updateRoomSize(
+    id: number,
+    roomWidthM: number,
+    roomHeightM: number,
+  ): Promise<EventDTO> {
+    return apiRequest<EventDTO>(`/events/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        room_width_m: roomWidthM,
+        room_height_m: roomHeightM,
+      }),
     });
   },
 
