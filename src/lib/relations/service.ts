@@ -1,23 +1,16 @@
 import { apiRequest } from "../api/client";
+import type {
+  GuestRelationCreateInput,
+  GuestRelationDTO,
+  GuestRelationUpdateInput,
+} from "./types";
 
-export type GuestRelationKind =
-  | "AFFINITY"
-  | "FAMILY"
-  | "SOCIAL"
-  | "CONFLICT";
-
-export type GuestRelationDTO = {
-  id: number;
-  event_id: number;
-  guest_a_id: number;
-  guest_b_id: number;
-  kind: GuestRelationKind;
-  strength: number;
-  source: "USER" | "IMPORT" | "AI_SUGGESTION";
-  notes: string | null;
-  guest_a: { id: number; full_name: string };
-  guest_b: { id: number; full_name: string };
-};
+export type {
+  GuestRelationDTO,
+  GuestRelationKind,
+  GuestRelationCreateInput,
+  GuestRelationUpdateInput,
+} from "./types";
 
 const base = (eventId: number) => `/events/${eventId}`;
 
@@ -28,17 +21,28 @@ export const relationsService = {
 
   async create(
     eventId: number,
-    body: {
-      guest_id_1: number;
-      guest_id_2: number;
-      kind: GuestRelationKind;
-      strength?: number;
-      notes?: string | null;
-    },
+    body: GuestRelationCreateInput,
   ): Promise<GuestRelationDTO> {
     return apiRequest<GuestRelationDTO>(`${base(eventId)}/relations`, {
       method: "POST",
       body: JSON.stringify(body),
+    });
+  },
+
+  async update(
+    eventId: number,
+    input: GuestRelationUpdateInput,
+  ): Promise<GuestRelationDTO> {
+    const { id, ...payload } = input;
+    return apiRequest<GuestRelationDTO>(`${base(eventId)}/relations/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async delete(eventId: number, id: number): Promise<void> {
+    return apiRequest<void>(`${base(eventId)}/relations/${id}`, {
+      method: "DELETE",
     });
   },
 };
