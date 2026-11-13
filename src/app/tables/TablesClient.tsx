@@ -44,6 +44,7 @@ export default function TablesClient({ eventId }: TablesClientProps) {
   const [seatingWeights, setSeatingWeights] = useState<SeatingWeights>(DEFAULT_WEIGHTS);
   const [seatingAlerts, setSeatingAlerts] = useState<SeatingAlert[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [openDrawer, setOpenDrawer] = useState<"unplaced" | "unassigned" | null>(null);
 
   useEffect(() => {
     setLastEventId(eventId);
@@ -333,6 +334,28 @@ export default function TablesClient({ eventId }: TablesClientProps) {
               </button>
               <button
                 type="button"
+                onClick={() => setOpenDrawer("unassigned")}
+                className={`h-9 rounded-lg border px-3 text-xs font-semibold transition ${
+                  unassignedConfirmedGuests.length > 0
+                    ? "border-zinc-900 bg-zinc-900 text-white hover:bg-zinc-800"
+                    : "border-zinc-200 bg-white text-zinc-400"
+                }`}
+              >
+                Sin asignar ({unassignedConfirmedGuests.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setOpenDrawer("unplaced")}
+                className={`h-9 rounded-lg border px-3 text-xs font-semibold transition ${
+                  unplacedTables.length > 0
+                    ? "border-zinc-900 bg-zinc-900 text-white hover:bg-zinc-800"
+                    : "border-zinc-200 bg-white text-zinc-400"
+                }`}
+              >
+                Mesas sin ubicar ({unplacedTables.length})
+              </button>
+              <button
+                type="button"
                 onClick={openCreate}
                 className="h-10 rounded-full bg-zinc-900 px-5 text-sm font-semibold text-white transition hover:bg-zinc-800"
               >
@@ -350,90 +373,19 @@ export default function TablesClient({ eventId }: TablesClientProps) {
           alerts={seatingAlerts}
         />
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_260px]">
-          <VenueCanvas
-            tables={placedTables}
-            roomWidthM={event.room_width_m}
-            roomHeightM={event.room_height_m}
-            onTableMove={handleTableMove}
-            selectedTableId={selectedTableId}
-            onSelectTable={setSelectedTableId}
-            assignments={assignments}
-            onEmptySeatClick={(table, seatNumber) =>
-              setPicker({ table, seatNumber })
-            }
-            onOccupiedSeatClick={handleOccupiedSeatClick}
-          />
-
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-3">
-              <h3 className="text-sm font-semibold text-zinc-700">
-                Mesas sin ubicar
-              </h3>
-              {unplacedTables.length === 0 ? (
-                <p className="text-xs text-zinc-500">
-                  Todas las mesas están ubicadas en el canvas.
-                </p>
-              ) : (
-                unplacedTables.map((table) => (
-                  <div
-                    key={table.id}
-                    className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-3"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-zinc-900">
-                        {table.name}
-                      </p>
-                      <p className="text-xs text-zinc-500">
-                        {SHAPE_LABELS[table.shape]} · {table.seats} puestos
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handlePlace(table)}
-                      className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-50"
-                    >
-                      Ubicar
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <h3 className="text-sm font-semibold text-zinc-700">
-                Confirmados sin asignar
-              </h3>
-              {unassignedConfirmedGuests.length === 0 ? (
-                <p className="text-xs text-zinc-500">
-                  No hay invitados confirmados pendientes de ubicar.
-                </p>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {unassignedConfirmedGuests.map((guest) => (
-                    <div
-                      key={guest.id}
-                      className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white p-2"
-                    >
-                      {guest.avatar_key ? (
-                        <img
-                          src={getAvatarUrl(guest.avatar_key)}
-                          alt={guest.full_name}
-                          className="h-7 w-7 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-7 w-7 rounded-full bg-zinc-200" />
-                      )}
-                      <span className="text-xs font-medium text-zinc-900">
-                        {guest.full_name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <VenueCanvas
+          tables={placedTables}
+          roomWidthM={event.room_width_m}
+          roomHeightM={event.room_height_m}
+          onTableMove={handleTableMove}
+          selectedTableId={selectedTableId}
+          onSelectTable={setSelectedTableId}
+          assignments={assignments}
+          onEmptySeatClick={(table, seatNumber) =>
+            setPicker({ table, seatNumber })
+          }
+          onOccupiedSeatClick={handleOccupiedSeatClick}
+        />
 
         <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm">
           <table className="min-w-full text-left text-sm">
@@ -510,6 +462,86 @@ export default function TablesClient({ eventId }: TablesClientProps) {
         onClose={() => setPicker(null)}
         onPick={handlePickGuest}
       />
+
+      {openDrawer && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <button
+            type="button"
+            aria-label="Cerrar"
+            className="absolute inset-0 bg-black/30"
+            onClick={() => setOpenDrawer(null)}
+          />
+          <div className="relative flex h-full w-full max-w-sm flex-col gap-4 overflow-y-auto bg-white p-6 shadow-lg">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-zinc-900">
+                {openDrawer === "unplaced" ? "Mesas sin ubicar" : "Confirmados sin asignar"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setOpenDrawer(null)}
+                className="text-sm font-semibold text-zinc-500 hover:text-zinc-700"
+              >
+                Cerrar
+              </button>
+            </div>
+
+            {openDrawer === "unplaced" ? (
+              unplacedTables.length === 0 ? (
+                <p className="text-sm text-zinc-500">
+                  Todas las mesas están ubicadas en el canvas.
+                </p>
+              ) : (
+                unplacedTables.map((table) => (
+                  <div
+                    key={table.id}
+                    className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white p-3"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-zinc-900">
+                        {table.name}
+                      </p>
+                      <p className="text-xs text-zinc-500">
+                        {SHAPE_LABELS[table.shape]} · {table.seats} puestos
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handlePlace(table)}
+                      className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-50"
+                    >
+                      Ubicar
+                    </button>
+                  </div>
+                ))
+              )
+            ) : unassignedConfirmedGuests.length === 0 ? (
+              <p className="text-sm text-zinc-500">
+                No hay invitados confirmados pendientes de ubicar.
+              </p>
+            ) : (
+              unassignedConfirmedGuests.map((guest) => (
+                <div
+                  key={guest.id}
+                  className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white p-2"
+                >
+                  {guest.avatar_key ? (
+                    <img
+                      src={getAvatarUrl(guest.avatar_key)}
+                      alt={guest.full_name}
+                      className="h-7 w-7 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-7 w-7 rounded-full bg-zinc-200" />
+                  )}
+                  <span className="text-xs font-medium text-zinc-900">
+                    {guest.full_name}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
